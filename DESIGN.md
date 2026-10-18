@@ -13,7 +13,7 @@ This file is the repo-side summary for continuity across chat sessions.
 | Milestone | Status |
 |---|---|
 | 1. Basic scorer + rules and FAQ | Done (artifact preview: https://claude.ai/artifact/4MR4BWP7uaTz1cpkP2Ay5q) |
-| 2. Live on your phone (Pages, icon, offline, install tip) | Pushed as v1; waiting on Pages switch-on and phone test |
+| 2. Live on your phone (Pages, icon, offline, install tip) | Done (v1 live, installed on Stuart's iPhone) |
 | 3. Card-tap calculator | Not started |
 | 4. Fixing mistakes and history | Not started |
 | 5. Polish and extras | Not started |
@@ -67,6 +67,7 @@ Totals are always worked out from `rounds`, never stored. `migrate()` upgrades o
 
 ## 4. Lessons carried over from Swipe Snake
 
+- On a phone, GitHub folds the Settings side menu away; go straight to `github.com/<owner>/<repo>/settings/pages`.
 - Claude can't create repos or switch on GitHub Pages. Stuart does those in GitHub (Pages via Safari: Settings → Pages; the iOS app has no Pages setting).
 - `[hidden] { display: none !important; }` is global, so no layout rule can keep a hidden screen visible.
 - No blanket `preventDefault()` on touches. Buttons use `touch-action: manipulation` to stop double-tap zoom.
@@ -87,3 +88,4 @@ Totals are always worked out from `rounds`, never stored. `migrate()` upgrades o
 | 18 Oct 2026 | Styled with Stuart's "Flip Score" design system; fonts bundled for offline |
 | 18 Oct 2026 | Round entry by keypad in Milestone 1; card-tap calculator in Milestone 3 |
 | 18 Oct 2026 | v1 pushed straight to `main`, as nothing was installed yet; test branches from Milestone 3 |
+| 18 Oct 2026 | Milestone 2 done: Pages live at sgoodwin-cloud.github.io/flip7-score |
