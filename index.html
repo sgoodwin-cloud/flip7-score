@@ -1,0 +1,661 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flip 7 Score</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flip 7">
+<meta name="theme-color" content="#2e3192">
+<style>
+/* Fonts are bundled in fonts/ so the app looks right offline (OFL / Apache licences) */
+@font-face { font-family: "Overpass"; font-weight: 700; font-display: swap; src: url(fonts/overpass-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Overpass"; font-weight: 800; font-display: swap; src: url(fonts/overpass-latin-800-normal.woff2) format("woff2"); }
+@font-face { font-family: "Bebas Neue"; font-weight: 400; font-display: swap; src: url(fonts/bebas-neue-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Roboto"; font-weight: 400; font-display: swap; src: url(fonts/roboto-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Roboto"; font-weight: 700; font-display: swap; src: url(fonts/roboto-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Roboto Condensed"; font-weight: 600; font-style: italic; font-display: swap; src: url(fonts/roboto-condensed-latin-600-italic.woff2) format("woff2"); }
+@font-face { font-family: "Yellowtail"; font-weight: 400; font-display: swap; src: url(fonts/yellowtail-latin-400-normal.woff2) format("woff2"); }
+/* Safe areas (the artifact wrapper did this for us) */
+:root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+/* Layout: one phone-width column; sticky header with flag title and Rules; bottom sheets for score entry. Tokens from the Flip Score design system. */
+:root {
+  --surface: #fef8d4; --surface-raised: #fffcea; --line: #e6d89a;
+  --ink: #2e3192; --ink-muted: #5b5ea6; --navy: #2e3192;
+  --ribbon: #2e3192; --ribbon-ink: #fffcea; --highlight: #f8d460;
+  --teal: #3ca7a4; --teal-text: #1e7471; --teal-deep: #1e7471;
+  --aqua: #7bcdd2; --gold: #f8d460; --orange: #f8a020; --red: #f04840;
+  --red-text: #c8241c; --red-ink: #ffffff; --white: #ffffff; --card-face: #fffbe6;
+  --scrim: rgba(24, 27, 79, .55);
+  --shadow-button: 0 4px 0 0 #2e3192;
+  --font-display: "Overpass", "Arial Narrow", system-ui, sans-serif;
+  --font-numeral: "Bebas Neue", "Arial Narrow", Impact, sans-serif;
+  --font-sans: "Roboto", system-ui, sans-serif;
+  --font-condensed: "Roboto Condensed", "Arial Narrow", sans-serif;
+  --font-script: "Yellowtail", cursive;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
+  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 999px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --surface: #181b4f; --surface-raised: #23277a; --line: #3a3f8f;
+  --ink: #fef8d4; --ink-muted: #c9c6e8; --ribbon: #f8d460; --ribbon-ink: #2e3192; --highlight: #fffcea;
+  --teal: #5fc8c4; --teal-text: #5fc8c4; --red-text: #ff6a5e; --red-ink: #181b4f;
+  --scrim: rgba(5, 6, 30, .7); --shadow-button: 0 4px 0 0 #0b0d2e; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --surface: #181b4f; --surface-raised: #23277a; --line: #3a3f8f;
+  --ink: #fef8d4; --ink-muted: #c9c6e8; --ribbon: #f8d460; --ribbon-ink: #2e3192; --highlight: #fffcea;
+  --teal: #5fc8c4; --teal-text: #5fc8c4; --red-text: #ff6a5e; --red-ink: #181b4f;
+  --scrim: rgba(5, 6, 30, .7); --shadow-button: 0 4px 0 0 #0b0d2e; color-scheme: dark; }
+
+/* Lesson from Swipe Snake: hidden always wins over any layout rule */
+[hidden] { display: none !important; }
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body { margin: 0; background: var(--surface); color: var(--ink); font: 16px/22px var(--font-sans);
+  -webkit-tap-highlight-color: transparent; }
+button { touch-action: manipulation; font: inherit; }
+.wrap { max-width: 520px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 var(--space-8); }
+
+/* Header */
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
+  padding-block: var(--space-3); border-bottom: 2px solid var(--line); margin-bottom: var(--space-4); }
+.brand { font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: .08em; text-transform: uppercase; }
+.brand small { display: block; font-size: 11px; line-height: 12px; letter-spacing: .1em; color: var(--ink-muted); }
+
+/* Design-system components (fs-) */
+.fs-flag { --notch: 16px; display: inline-block; align-self: flex-start; background: var(--ribbon); padding: 3px 0 3px 3px;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--notch)) 50%, 100% 100%, 0 100%); }
+.fs-flag > span { display: block; margin-right: 4px; background: var(--surface); color: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--teal); padding: 6px calc(var(--notch) + 22px) 4px 14px;
+  font-family: var(--font-display); font-weight: 800; font-size: 22px; line-height: 26px; letter-spacing: .08em; text-transform: uppercase;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--notch)) 50%, 100% 100%, 0 100%); }
+.fs-ribbon { display: inline-block; background: var(--ribbon); color: var(--ribbon-ink);
+  font-family: var(--font-display); font-weight: 800; font-size: 14px; line-height: 18px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 6px 22px 4px; clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%, 10px 50%); }
+.fs-btn { font-family: var(--font-display); font-weight: 800; font-size: 15px; line-height: 18px; letter-spacing: .06em; text-transform: uppercase;
+  border: 2px solid var(--navy); border-radius: var(--radius-md); padding: 12px 22px 10px; min-height: 48px;
+  box-shadow: var(--shadow-button); cursor: pointer; transition: transform .06s, box-shadow .06s; background: var(--gold); color: var(--navy); }
+.fs-btn:active { transform: translateY(4px); box-shadow: none; }
+.fs-btn:focus-visible, .key:focus-visible, .fs-player:focus-visible, .tab:focus-visible, .icon-btn:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.fs-btn--aqua { background: var(--aqua); }
+.fs-btn--navy { background: var(--ribbon); color: var(--ribbon-ink); border-color: var(--ribbon); }
+.fs-btn--danger { background: var(--red-text); color: var(--red-ink); border-color: var(--red-text); }
+.fs-btn--ghost { background: transparent; color: var(--ink); border-color: var(--ink); box-shadow: none; }
+.fs-btn--small { min-height: 40px; padding: 8px 14px 6px; font-size: 13px; }
+.fs-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.fs-btn--block { width: 100%; }
+.fs-chip { display: inline-flex; align-items: center; font-family: var(--font-display); font-weight: 800; white-space: nowrap;
+  font-size: 12px; line-height: 14px; letter-spacing: .08em; text-transform: uppercase;
+  padding: 5px 10px 3px; border-radius: var(--radius-pill); border: 2px solid var(--navy); background: var(--card-face); color: var(--navy); }
+.fs-chip--stayed { background: var(--aqua); }
+.fs-chip--bust { background: var(--red-text); color: var(--red-ink); border-color: var(--red-text); }
+.fs-chip--wait { background: transparent; color: var(--ink-muted); border-color: var(--line); }
+.fs-panel { background: var(--aqua); color: var(--navy); border: 2px solid var(--navy);
+  box-shadow: inset 0 0 0 6px var(--gold), inset 0 0 0 8px var(--navy); padding: var(--space-6); text-align: center; }
+.fs-aside { font-family: var(--font-condensed); font-style: italic; font-weight: 600; font-size: 15px; line-height: 20px; color: var(--teal-text); }
+.fs-aside b { font-weight: 600; text-transform: uppercase; }
+.fs-note { background: var(--teal-deep); color: var(--white); padding: var(--space-3) var(--space-4);
+  font-family: var(--font-condensed); font-style: italic; font-weight: 600; font-size: 15px; line-height: 20px; }
+.fs-signoff { font-family: var(--font-script); font-size: 26px; line-height: 32px; color: var(--ink); text-align: center; }
+.fs-player { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); align-items: center; width: 100%; text-align: left;
+  background: var(--surface-raised); color: var(--ink); border: 2px solid var(--line); border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4); cursor: pointer; }
+.fs-player--next { border-color: var(--teal); box-shadow: 0 0 0 2px var(--teal); }
+.fs-player__head { display: flex; align-items: center; gap: var(--space-2); min-width: 0; flex-wrap: wrap; }
+.fs-player__name { font-family: var(--font-display); font-weight: 800; font-size: 20px; line-height: 24px; letter-spacing: .06em; text-transform: uppercase;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.fs-player__total { grid-row: 1 / span 2; grid-column: 2; font-family: var(--font-numeral); font-size: 42px; line-height: 40px; text-align: right;
+  font-variant-numeric: tabular-nums; }
+.fs-player__total small { display: block; font-family: var(--font-display); font-weight: 800; font-size: 11px; line-height: 12px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
+.fs-player__sub { font-size: 13px; line-height: 18px; color: var(--ink-muted); }
+
+/* Screens */
+.screen { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.row { display: flex; gap: var(--space-2); align-items: center; }
+.row > .grow { flex: 1; min-width: 0; }
+.lead { margin: 0; }
+.muted { color: var(--ink-muted); font-size: 14px; }
+.round-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.progress { font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+
+/* Setup list */
+.seat { display: flex; align-items: center; gap: var(--space-2); background: var(--surface-raised); border: 2px solid var(--line);
+  border-radius: var(--radius-lg); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3); }
+.seat__n { font-family: var(--font-numeral); font-size: 26px; width: 22px; text-align: center; color: var(--ink-muted); }
+.seat__name { flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 800; font-size: 18px; letter-spacing: .06em; text-transform: uppercase;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { width: 40px; height: 40px; border-radius: var(--radius-md); border: 2px solid var(--line); background: transparent; color: var(--ink);
+  display: grid; place-items: center; cursor: pointer; }
+.icon-btn svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.icon-btn:disabled { opacity: .3; cursor: default; }
+.field { width: 100%; min-height: 48px; border: 2px solid var(--ink); border-radius: var(--radius-sm); background: var(--surface-raised);
+  color: var(--ink); padding: 10px 12px; font: 700 18px/24px var(--font-sans); }
+.field:focus { outline: 3px solid var(--teal); outline-offset: 1px; }
+.field::placeholder { color: var(--ink-muted); font-weight: 400; }
+
+/* Sheets */
+.scrim { position: fixed; inset: 0; z-index: 20; background: var(--scrim); display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 520px; max-height: 100%; overflow-y: auto; background: var(--surface); color: var(--ink);
+  border-top: 4px solid var(--ribbon); border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-4) max(16px, env(safe-area-inset-right, 0px)) calc(var(--space-6) + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; gap: var(--space-4); }
+.readout { display: flex; align-items: baseline; justify-content: center; gap: var(--space-2); background: var(--surface-raised);
+  border: 2px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-2); }
+.readout__num { font-family: var(--font-numeral); font-size: 72px; line-height: 70px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.readout__num.is-empty { color: var(--line); }
+.readout__unit { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.key { min-height: 56px; border: 2px solid var(--navy); border-radius: var(--radius-md); background: var(--card-face); color: var(--navy);
+  font-family: var(--font-numeral); font-size: 32px; line-height: 1; cursor: pointer; box-shadow: 0 3px 0 0 var(--navy); }
+.key:active { transform: translateY(3px); box-shadow: none; }
+.key--fn { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; background: var(--surface-raised); }
+.btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.warn { color: var(--red-text); font-weight: 700; font-size: 14px; text-align: center; margin: 0; min-height: 20px; }
+
+/* Winner */
+.winner-name { font-family: var(--font-display); font-weight: 800; font-size: 30px; line-height: 34px; letter-spacing: .08em; text-transform: uppercase; overflow-wrap: anywhere; }
+.winner-score { font-family: var(--font-numeral); font-size: 64px; line-height: 60px; }
+.standings { display: flex; flex-direction: column; gap: var(--space-2); }
+.standing { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border-bottom: 2px solid var(--line); }
+.standing__pos { font-family: var(--font-numeral); font-size: 24px; width: 24px; color: var(--ink-muted); }
+.standing__name { flex: 1; min-width: 0; font-family: var(--font-display); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.standing__score { font-family: var(--font-numeral); font-size: 28px; font-variant-numeric: tabular-nums; }
+
+/* Banner (tie / notices) */
+.banner { background: var(--gold); color: var(--navy); border: 2px solid var(--navy); border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4); font-weight: 700; }
+
+/* Rules */
+.tabs { display: grid; grid-template-columns: 1fr 1fr; border: 2px solid var(--ink); border-radius: var(--radius-md); overflow: hidden; }
+.tab { min-height: 44px; border: 0; background: transparent; color: var(--ink); font-family: var(--font-display); font-weight: 800;
+  font-size: 14px; letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
+.tab[aria-selected="true"] { background: var(--ribbon); color: var(--ribbon-ink); }
+.prose { display: flex; flex-direction: column; gap: var(--space-4); }
+.prose h3 { margin: 0; text-wrap: balance; }
+.prose p, .prose ul { margin: 0; }
+.prose ul { padding-left: 20px; display: flex; flex-direction: column; gap: var(--space-1); }
+.rule-sec { display: flex; flex-direction: column; gap: var(--space-2); }
+.counts { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: var(--space-2); }
+.count { background: var(--card-face); color: var(--navy); border: 2px solid var(--navy); border-radius: var(--radius-sm); text-align: center; padding: var(--space-1); }
+.count b { display: block; font-family: var(--font-numeral); font-size: 26px; font-weight: 400; line-height: 28px; }
+.count span { font-size: 12px; }
+.sum { font-family: var(--font-numeral); font-size: 22px; line-height: 28px; letter-spacing: .02em; }
+.faq { border-bottom: 2px solid var(--line); padding-bottom: var(--space-3); display: flex; flex-direction: column; gap: var(--space-1); }
+.faq h4 { margin: 0; font-size: 16px; line-height: 22px; }
+.faq p { margin: 0; }
+.source { font-size: 13px; color: var(--ink-muted); }
+.source a { color: var(--teal-text); }
+.ver { text-align: center; font-size: 12px; color: var(--ink-muted); }
+
+
+/* Update banner */
+#update { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  white-space: nowrap; }
+#update:active { transform: translateX(-50%) translateY(4px); }
+@media (prefers-reduced-motion: reduce) { .fs-btn, .key { transition: none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Flip 7 Score<small id="topSub">Race to 200</small></div>
+    <button class="fs-btn fs-btn--ghost fs-btn--small" id="rulesBtn" type="button">Rules</button>
+  </header>
+
+  <!-- SETUP -->
+  <section class="screen" id="scrSetup" hidden>
+    <div class="fs-flag"><span>New game</span></div>
+    <p class="lead">Add everyone in seating order, starting with the first dealer.</p>
+    <form class="row" id="addForm" autocomplete="off">
+      <input class="field grow" id="nameInput" maxlength="16" placeholder="Player name" enterkeyhint="done">
+      <button class="fs-btn fs-btn--aqua" type="submit" id="addBtn">Add</button>
+    </form>
+    <p class="warn" id="setupWarn"></p>
+    <p class="fs-aside" id="installTip" hidden><b>Tip:</b> To keep this on your iPhone, tap Share, then Add to Home Screen. It then works offline, with no signal.</p>
+    <div class="stack" id="seatList"></div>
+    <p class="muted" id="seatCount"></p>
+    <button class="fs-btn fs-btn--block" id="startBtn" type="button">Start game</button>
+  </section>
+
+  <!-- SCOREBOARD -->
+  <section class="screen" id="scrBoard" hidden>
+    <div class="round-bar">
+      <div class="fs-flag"><span id="roundTitle">Round 1</span></div>
+      <span class="progress" id="roundProgress"></span>
+    </div>
+    <div class="banner" id="tieBanner" hidden></div>
+    <p class="fs-aside" id="boardHint"><b>Note:</b> Tap a player to enter their score for this round.</p>
+    <div class="stack" id="playerList"></div>
+    <button class="fs-btn fs-btn--navy fs-btn--block" id="endRoundBtn" type="button">End round</button>
+    <button class="fs-btn fs-btn--ghost fs-btn--small" id="newGameBtn" type="button">New game</button>
+  </section>
+
+  <!-- WINNER -->
+  <section class="screen" id="scrWinner" hidden>
+    <div class="fs-flag"><span>End of the game</span></div>
+    <div class="fs-panel">
+      <div class="fs-ribbon">Winner</div>
+      <div class="winner-name" id="winnerName"></div>
+      <div class="winner-score" id="winnerScore"></div>
+      <div id="winnerRounds"></div>
+    </div>
+    <div class="standings" id="standings"></div>
+    <p class="fs-signoff">May the cards flip in your favour!</p>
+    <div class="btn-row">
+      <button class="fs-btn" id="rematchBtn" type="button">Rematch</button>
+      <button class="fs-btn fs-btn--navy" id="freshBtn" type="button">New players</button>
+    </div>
+  </section>
+
+  <!-- RULES -->
+  <section class="screen" id="scrRules" hidden>
+    <div class="round-bar">
+      <div class="fs-flag"><span>How to play</span></div>
+      <button class="fs-btn fs-btn--small" id="rulesClose" type="button">Back</button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" id="tabRules" aria-selected="true" type="button">Rules</button>
+      <button class="tab" role="tab" id="tabFaq" aria-selected="false" type="button">FAQ</button>
+    </div>
+    <div class="prose" id="paneRules"></div>
+    <div class="prose" id="paneFaq" hidden></div>
+    <p class="source">Rules summarised from the Flip 7 rulebook, ruleset edition 3.1, and the <a href="https://theop.games/pages/flip-7-faqs" target="_blank" rel="noopener">official Flip 7 FAQs</a>. This app is an unofficial score keeper.</p>
+  </section>
+
+  <p class="ver" id="ver"></p>
+</div>
+
+<!-- Score entry sheet -->
+<div class="scrim" id="entrySheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="entryName">
+    <div class="round-bar">
+      <div class="fs-flag"><span id="entryName"></span></div>
+      <span class="progress" id="entryRound"></span>
+    </div>
+    <div class="readout"><span class="readout__num" id="entryNum">0</span><span class="readout__unit">points</span></div>
+    <p class="fs-aside"><b>Note:</b> Type the round total, including any +15 Flip 7 bonus.</p>
+    <div class="keypad" id="keypad"></div>
+    <p class="warn" id="entryWarn"></p>
+    <div class="btn-row">
+      <button class="fs-btn fs-btn--danger" id="bustBtn" type="button">Bust</button>
+      <button class="fs-btn" id="saveBtn" type="button">Save</button>
+    </div>
+    <button class="fs-btn fs-btn--ghost fs-btn--small" id="entryCancel" type="button">Cancel</button>
+  </div>
+</div>
+
+<!-- Confirm sheet (built into the page; no browser dialogs) -->
+<div class="scrim" id="confirmSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="fs-flag"><span id="confirmTitle">Are you sure?</span></div>
+    <p class="lead" id="confirmText"></p>
+    <div class="btn-row">
+      <button class="fs-btn fs-btn--ghost" id="confirmNo" type="button">Keep playing</button>
+      <button class="fs-btn fs-btn--danger" id="confirmYes" type="button">Yes</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const APP_VERSION = '1';
+  const SAVE_KEY = 'flip7-score';
+  const SAVE_VERSION = 1;
+  const TARGET = 200;
+  const MIN_PLAYERS = 2, MAX_PLAYERS = 8, MAX_ROUND = 400;
+
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const uid = () => Math.random().toString(36).slice(2, 9);
+
+  /* ---------- State & saving ---------- */
+  // Save bundle: { v, screen, draft: [names], game: { players:[{id,name}], target, rounds:[{id:{pts,bust}}], current:{id:{pts,bust}}, finished } }
+  function freshState() { return { v: SAVE_VERSION, screen: 'setup', draft: [], game: null }; }
+  function migrate(s) {
+    if (!s || typeof s !== 'object') return null;
+    // Future versions upgrade older saves here rather than wiping them.
+    if (s.v === SAVE_VERSION) return s;
+    return null;
+  }
+  function load() {
+    try { const raw = localStorage.getItem(SAVE_KEY); return raw ? migrate(JSON.parse(raw)) : null; } catch (e) { return null; }
+  }
+  function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: play on */ } }
+
+  let state = load() || freshState();
+
+  /* ---------- Scoring helpers (totals always derived from rounds) ---------- */
+  function totalFor(g, id) { return g.rounds.reduce((t, r) => t + (r[id] ? r[id].pts : 0), 0); }
+  function scoredCount(g) { return g.players.filter((p) => g.current[p.id]).length; }
+  function standings(g) {
+    return g.players.map((p) => ({ ...p, total: totalFor(g, p.id) })).sort((a, b) => b.total - a.total);
+  }
+  // After a round: game ends if anyone reached the target and one player alone has the top score.
+  function checkEnd(g) {
+    const s = standings(g);
+    if (!s.length || s[0].total < g.target) return { over: false, tie: false };
+    const tied = s.filter((p) => p.total === s[0].total);
+    return tied.length > 1 ? { over: false, tie: true, tied } : { over: true, winner: s[0] };
+  }
+
+  /* ---------- Rendering ---------- */
+  function show(screen) {
+    ['Setup', 'Board', 'Winner', 'Rules'].forEach((n) => { $('scr' + n).hidden = n.toLowerCase() !== screen; });
+    $('rulesBtn').hidden = screen === 'rules';
+    window.scrollTo(0, 0);
+  }
+
+  function render() {
+    const scr = state.screen;
+    show(scr);
+    if (scr === 'setup') renderSetup();
+    if (scr === 'board') renderBoard();
+    if (scr === 'winner') renderWinner();
+    $('topSub').textContent = state.game && scr !== 'setup' ? 'Race to ' + state.game.target : 'Race to ' + TARGET;
+  }
+
+  const ICON_UP = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+  const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+
+  function renderSetup() {
+    const d = state.draft;
+    $('seatList').innerHTML = d.map((n, i) =>
+      '<div class="seat"><span class="seat__n">' + (i + 1) + '</span><span class="seat__name">' + esc(n) + '</span>' +
+      '<button class="icon-btn" type="button" data-up="' + i + '" aria-label="Move ' + esc(n) + ' up"' + (i === 0 ? ' disabled' : '') + '>' + ICON_UP + '</button>' +
+      '<button class="icon-btn" type="button" data-del="' + i + '" aria-label="Remove ' + esc(n) + '">' + ICON_X + '</button></div>').join('');
+    $('seatCount').textContent = d.length < MIN_PLAYERS
+      ? 'Add at least ' + MIN_PLAYERS + ' players.'
+      : d.length + ' players. Up to ' + MAX_PLAYERS + '.';
+    $('startBtn').disabled = d.length < MIN_PLAYERS;
+    $('addBtn').disabled = d.length >= MAX_PLAYERS;
+    $('nameInput').disabled = d.length >= MAX_PLAYERS;
+  }
+
+  function renderBoard() {
+    const g = state.game;
+    const roundNo = g.rounds.length + 1;
+    const done = scoredCount(g);
+    $('roundTitle').textContent = 'Round ' + roundNo;
+    $('roundProgress').textContent = done + ' of ' + g.players.length + ' scored';
+    const nextId = (g.players.find((p) => !g.current[p.id]) || {}).id;
+    $('playerList').innerHTML = g.players.map((p) => {
+      const e = g.current[p.id];
+      const chip = !e ? '<span class="fs-chip fs-chip--wait">To score</span>'
+        : e.bust ? '<span class="fs-chip fs-chip--bust">Bust</span>'
+        : '<span class="fs-chip fs-chip--stayed">+' + e.pts + '</span>';
+      const sub = !e ? (g.rounds.length ? 'Last round: ' + lastRoundText(g, p.id) : 'Tap to enter score')
+        : 'Tap to change';
+      return '<button type="button" class="fs-player' + (p.id === nextId ? ' fs-player--next' : '') + '" data-player="' + p.id + '">' +
+        '<div class="fs-player__head"><span class="fs-player__name">' + esc(p.name) + '</span>' + chip + '</div>' +
+        '<div class="fs-player__total">' + totalFor(g, p.id) + '<small>Total</small></div>' +
+        '<div class="fs-player__sub">' + sub + '</div></button>';
+    }).join('');
+    const all = done === g.players.length;
+    $('endRoundBtn').disabled = !all;
+    $('endRoundBtn').textContent = all ? 'End round ' + roundNo : 'End round (' + (g.players.length - done) + ' to go)';
+    $('boardHint').hidden = done > 0;
+    const t = checkEnd(g);
+    if (t.tie && g.rounds.length) {
+      $('tieBanner').hidden = false;
+      $('tieBanner').textContent = t.tied.map((p) => p.name).join(' and ') + ' are tied on ' + t.tied[0].total + '. Play another round to break the tie.';
+    } else $('tieBanner').hidden = true;
+  }
+
+  function lastRoundText(g, id) {
+    const r = g.rounds[g.rounds.length - 1][id];
+    return !r ? '—' : r.bust ? 'bust' : r.pts + ' points';
+  }
+
+  function renderWinner() {
+    const g = state.game;
+    const s = standings(g);
+    $('winnerName').textContent = s[0].name;
+    $('winnerScore').textContent = s[0].total;
+    $('winnerRounds').textContent = 'after ' + g.rounds.length + ' round' + (g.rounds.length === 1 ? '' : 's');
+    let pos = 0, prev = null;
+    $('standings').innerHTML = s.map((p, i) => {
+      if (p.total !== prev) { pos = i + 1; prev = p.total; }
+      return '<div class="standing"><span class="standing__pos">' + pos + '</span><span class="standing__name">' + esc(p.name) +
+        '</span><span class="standing__score">' + p.total + '</span></div>';
+    }).join('');
+  }
+
+  /* ---------- Setup actions ---------- */
+  $('addForm').addEventListener('submit', (ev) => {
+    ev.preventDefault();
+    const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
+    $('setupWarn').textContent = '';
+    if (!name) return;
+    if (state.draft.length >= MAX_PLAYERS) { $('setupWarn').textContent = 'That’s the maximum of ' + MAX_PLAYERS + ' players.'; return; }
+    if (state.draft.some((n) => n.toLowerCase() === name.toLowerCase())) { $('setupWarn').textContent = name + ' is already playing. Add an initial to tell them apart.'; return; }
+    state.draft.push(name);
+    $('nameInput').value = '';
+    save(); renderSetup();
+    $('nameInput').focus();
+  });
+  $('seatList').addEventListener('click', (ev) => {
+    const up = ev.target.closest('[data-up]'), del = ev.target.closest('[data-del]');
+    if (up) { const i = +up.dataset.up; if (i > 0) { const d = state.draft; [d[i - 1], d[i]] = [d[i], d[i - 1]]; } }
+    if (del) state.draft.splice(+del.dataset.del, 1);
+    if (up || del) { save(); renderSetup(); }
+  });
+  $('startBtn').addEventListener('click', () => {
+    if (state.draft.length < MIN_PLAYERS) return;
+    startGame(state.draft.map((name) => ({ id: uid(), name })));
+  });
+  function startGame(players) {
+    state.game = { players, target: TARGET, rounds: [], current: {}, finished: false };
+    state.screen = 'board';
+    save(); render();
+  }
+
+  /* ---------- Score entry ---------- */
+  let entry = null; // { id, digits }
+  const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
+  $('keypad').innerHTML = KEYS.map((k) =>
+    '<button type="button" class="key' + (k.length > 1 ? ' key--fn' : '') + '" data-key="' + k + '">' +
+    (k === 'clear' ? 'Clear' : k === 'back' ? 'Delete' : k) + '</button>').join('');
+
+  function openEntry(id) {
+    const g = state.game;
+    const p = g.players.find((x) => x.id === id);
+    const e = g.current[id];
+    entry = { id, digits: e && !e.bust ? String(e.pts) : '' };
+    $('entryName').textContent = p.name;
+    $('entryRound').textContent = 'Round ' + (g.rounds.length + 1);
+    $('entryWarn').textContent = '';
+    updateReadout();
+    $('entrySheet').hidden = false;
+  }
+  function closeEntry() { $('entrySheet').hidden = true; entry = null; }
+  function updateReadout() {
+    const n = $('entryNum');
+    n.textContent = entry.digits || '0';
+    n.classList.toggle('is-empty', !entry.digits);
+  }
+  $('keypad').addEventListener('click', (ev) => {
+    const k = ev.target.closest('[data-key]'); if (!k || !entry) return;
+    const key = k.dataset.key;
+    $('entryWarn').textContent = '';
+    if (key === 'clear') entry.digits = '';
+    else if (key === 'back') entry.digits = entry.digits.slice(0, -1);
+    else if (entry.digits.length < 3) entry.digits = (entry.digits === '0' ? '' : entry.digits) + key;
+    updateReadout();
+  });
+  $('saveBtn').addEventListener('click', () => {
+    if (!entry) return;
+    const pts = entry.digits === '' ? 0 : parseInt(entry.digits, 10);
+    if (pts > MAX_ROUND) { $('entryWarn').textContent = 'That’s more than one round can score. Check the total.'; return; }
+    state.game.current[entry.id] = { pts, bust: false };
+    save(); closeEntry(); renderBoard();
+  });
+  $('bustBtn').addEventListener('click', () => {
+    if (!entry) return;
+    state.game.current[entry.id] = { pts: 0, bust: true };
+    save(); closeEntry(); renderBoard();
+  });
+  $('entryCancel').addEventListener('click', closeEntry);
+  $('entrySheet').addEventListener('click', (ev) => { if (ev.target === $('entrySheet')) closeEntry(); });
+
+  $('playerList').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-player]'); if (b) openEntry(b.dataset.player);
+  });
+
+  /* ---------- Round flow ---------- */
+  $('endRoundBtn').addEventListener('click', () => {
+    const g = state.game;
+    if (scoredCount(g) < g.players.length) return;
+    g.rounds.push(g.current);
+    g.current = {};
+    const res = checkEnd(g);
+    if (res.over) { g.finished = true; state.screen = 'winner'; }
+    save(); render();
+  });
+
+  /* ---------- Confirm sheet ---------- */
+  let confirmAction = null;
+  function confirmThen(title, text, yesLabel, fn) {
+    $('confirmTitle').textContent = title; $('confirmText').textContent = text; $('confirmYes').textContent = yesLabel;
+    confirmAction = fn; $('confirmSheet').hidden = false;
+  }
+  $('confirmNo').addEventListener('click', () => { $('confirmSheet').hidden = true; confirmAction = null; });
+  $('confirmYes').addEventListener('click', () => { $('confirmSheet').hidden = true; const f = confirmAction; confirmAction = null; if (f) f(); });
+  $('confirmSheet').addEventListener('click', (ev) => { if (ev.target === $('confirmSheet')) { $('confirmSheet').hidden = true; confirmAction = null; } });
+
+  $('newGameBtn').addEventListener('click', () => {
+    confirmThen('New game?', 'This clears the scores for the game in progress. The same players stay listed so you can start again quickly.', 'Clear game', () => {
+      state.draft = state.game.players.map((p) => p.name);
+      state.game = null; state.screen = 'setup'; save(); render();
+    });
+  });
+  $('rematchBtn').addEventListener('click', () => {
+    startGame(state.game.players.map((p) => ({ id: uid(), name: p.name })));
+  });
+  $('freshBtn').addEventListener('click', () => {
+    state.draft = state.game.players.map((p) => p.name);
+    state.game = null; state.screen = 'setup'; save(); render();
+  });
+
+  /* ---------- Rules & FAQ ---------- */
+  const COUNTS = [[12, 12], [11, 11], [10, 10], [9, 9], [8, 8], [7, 7], [6, 6], [5, 5], [4, 4], [3, 3], [2, 2], [1, 1], [0, 1]];
+  $('paneRules').innerHTML =
+    sec('The aim', '<p>Be the first to reach <b>200 points</b> over several rounds. Each round you build a line of face-up cards and score their total. Line up seven different numbers for a <b>Flip 7</b> and a 15-point bonus, but take a second copy of a number you already have and you <b>bust</b>, scoring nothing that round.</p>') +
+    sec('The deck', '<p>94 cards. Higher numbers are more common: there are as many copies of each number as its value, so twelve 12s down to a single 1, plus one 0.</p>' +
+      '<div class="counts">' + COUNTS.map(([n, c]) => '<div class="count"><b>' + n + '</b><span>×' + c + '</span></div>').join('') + '</div>' +
+      '<p>There are also six score modifiers (+2, +4, +6, +8, +10 and ×2, one of each) and nine action cards: three each of Freeze, Flip Three and Second Chance. The 0 scores nothing but still counts towards a Flip 7.</p>') +
+    sec('Playing a round', '<ul><li>Shuffle well and pick a dealer.</li><li>The dealer gives everyone, themselves included, one card face up. If an action card turns up, stop and resolve it before carrying on.</li>' +
+      '<li>Then, going round the table, each player still in chooses to <b>Hit</b> (take another card) or <b>Stay</b> (drop out and bank what they have). You can stay as long as you have at least one card.</li>' +
+      '<li>Lay number cards in a row and put modifier and action cards above them.</li></ul>' +
+      '<p class="fs-aside"><b>Note:</b> After the first deal some players may have no number card yet, and some may have several.</p>') +
+    sec('Action cards', '<p>Whoever is dealt an action card picks any player still in the round, including themselves, to receive it. If they are the only one left, it goes to them.</p>' +
+      '<ul><li><b>Freeze:</b> that player banks their points now and is out of the round.</li>' +
+      '<li><b>Flip Three:</b> that player must take the next three cards, one at a time. Stop early if they bust or reach Flip 7. A Second Chance drawn along the way can be kept; any other action card drawn waits until all three are done, and only if they haven’t busted.</li>' +
+      '<li><b>Second Chance:</b> keep it in front of you. If you draw a duplicate number, throw away the duplicate and the Second Chance and carry on. You can only hold one; a second must be given to another player still in, or discarded if nobody can take it. Unused ones are discarded at the end of the round.</li></ul>') +
+    sec('Modifier cards', '<ul><li>They never make you bust and don’t count towards Flip 7.</li><li><b>+2 to +10</b> add their value to your round.</li>' +
+      '<li><b>×2</b> doubles your number cards only. Double first, then add any + modifiers.</li>' +
+      '<li>You can stay holding only a modifier and still score it, unless it’s the ×2, which has nothing to double.</li></ul>') +
+    sec('End of a round', '<p>The round ends when every player has either busted or stayed, or straight away when someone flips seven different numbers.</p>' +
+      '<p class="fs-aside"><b>Note:</b> Turn your cards face down when you’re out so everyone can see who is still playing.</p>') +
+    sec('Scoring', '<p>Work it out in this order:</p><ul><li>Add up your number cards.</li><li>Double that if you have ×2.</li><li>Add your + modifiers.</li><li>Add 15 if you flipped 7.</li></ul>' +
+      '<div class="fs-note">Number cards 3, 11, 5, 7 and 10 make <span class="sum">36</span>. With a ×2 that becomes <span class="sum">72</span>. With a +10 instead it’s <span class="sum">46</span>. Add a 9 and a 4 for seven different numbers and it’s 49 + 15 = <span class="sum">64</span>.</div>') +
+    sec('The next round', '<p>Put this round’s cards aside without shuffling them back in. Pass the deck to the left; that player deals next. When the deck runs out, shuffle the discards to make a new one, leaving cards still in front of players where they are.</p>') +
+    sec('End of the game', '<p>Finish the round in which anyone reaches 200. Whoever has the most points then wins. If the top score is tied, keep playing rounds until there is a single leader.</p>');
+
+  const FAQ = [
+    ['What order do I add up the points in?', 'Number cards first, then double them if you have ×2, then add any + modifiers, and finally add 15 if you flipped 7.'],
+    ['Does ×2 double the +15 bonus or the + cards?', 'No. It only doubles the total of your number cards.'],
+    ['If I’m the last player still in, do I have to take a Freeze or Flip Three myself?', 'Yes. With nobody else to give it to, you play it on yourself.'],
+    ['After using a Second Chance, do I take another card straight away?', 'No. You get your next card on your next turn as usual.'],
+    ['How do you bust?', 'By drawing a number you already have in your line. You’re out of the round and score nothing for it.'],
+    ['Who decides where an action card goes, the dealer or the player who drew it?', 'The player who drew it. They can keep it or give it to any other player still in the round.'],
+    ['If Flip Three turns up another action card, can I give that one away?', 'Yes. You can play it on any player still in, or on yourself.'],
+    ['Can Second Chance protect me from a Freeze?', 'No. Second Chance only saves you from busting on a duplicate number.'],
+    ['What if two or more players finish over 200 on the same score?', 'Everyone keeps playing rounds until one player is clearly ahead.']
+  ];
+  $('paneFaq').innerHTML = FAQ.map(([q, a]) => '<div class="faq"><h4>' + esc(q) + '</h4><p>' + esc(a) + '</p></div>').join('');
+
+  function sec(title, body) { return '<div class="rule-sec"><span class="fs-ribbon">' + title + '</span>' + body + '</div>'; }
+
+  function setTab(faq) {
+    $('tabRules').setAttribute('aria-selected', String(!faq)); $('tabFaq').setAttribute('aria-selected', String(faq));
+    $('paneRules').hidden = faq; $('paneFaq').hidden = !faq;
+  }
+  $('tabRules').addEventListener('click', () => setTab(false));
+  $('tabFaq').addEventListener('click', () => setTab(true));
+  $('rulesBtn').addEventListener('click', () => { show('rules'); });
+  $('rulesClose').addEventListener('click', () => { render(); });
+
+  /* ---------- Install tip: only in Safari, not once installed or inside a preview frame ---------- */
+  try {
+    const installed = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+    $('installTip').hidden = installed || window.top !== window.self;
+  } catch (e) { /* cross-origin frame: leave the tip hidden */ }
+
+  /* ---------- Boot ---------- */
+  $('ver').textContent = 'v' + APP_VERSION;
+  if (state.screen === 'board' && !state.game) state.screen = 'setup';
+  if (state.screen === 'winner' && !(state.game && state.game.finished)) state.screen = state.game ? 'board' : 'setup';
+  render();
+
+  // Self-test of the end-of-game rule (console only)
+  (function test() {
+    const g = { target: 200, players: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }], rounds: [{ a: { pts: 200 }, b: { pts: 200 } }] };
+    console.assert(checkEnd(g).tie === true, 'tie over 200 should continue');
+    g.rounds.push({ a: { pts: 5 }, b: { pts: 0 } });
+    console.assert(checkEnd(g).over && checkEnd(g).winner.id === 'a', 'A should win');
+  })();
+})();
+</script>
+<button class="fs-btn" id="update" type="button" hidden>Update ready · tap to reload</button>
+
+<script>
+// Offline support + update banner (pattern proven in Swipe Snake v7+)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const reg = await navigator.serviceWorker.register('sw.js');
+      const btn = document.getElementById('update');
+      let reloading = false;
+      const reload = () => { if (!reloading) { reloading = true; location.reload(); } };
+      // Tap → tell the waiting worker to take over → reload only once it has actually switched on.
+      const show = w => {
+        btn.hidden = false;
+        btn.onclick = () => {
+          const nw = reg.waiting || w;
+          btn.textContent = 'Updating…'; btn.disabled = true;
+          if (!nw || nw.state === 'activated') return reload();
+          nw.addEventListener('statechange', () => { if (nw.state === 'activated') reload(); });
+          nw.postMessage('skipWaiting');
+          setTimeout(reload, 5000);
+        };
+      };
+      // Catch an update whatever stage it's at: already waiting, mid-download, or found later.
+      const track = w => {
+        if (!w) return;
+        const check = () => { if (w.state === 'installed' && navigator.serviceWorker.controller) show(w); };
+        check();
+        w.addEventListener('statechange', check);
+      };
+      track(reg.waiting);
+      track(reg.installing);
+      reg.addEventListener('updatefound', () => track(reg.installing));
+      reg.update().catch(() => {});
+      navigator.serviceWorker.addEventListener('controllerchange', reload);
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    } catch (e) { /* no service worker (e.g. artifact preview): app still works */ }
+  });
+}
+</script>
+</body>
+</html>
