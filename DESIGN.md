@@ -1,6 +1,6 @@
 # Flip 7 Score — design and release notes
 
-Last updated: 19 Oct 2026 (v2)
+Last updated: 19 Oct 2026 (v3 on branch `m3`)
 
 The full design doc (goals, scoring rules, rules/FAQ plan, screens, data model, milestones, Swipe Snake lessons) is Stuart's Claude doc "Flip 7 Score Tracker — Design Doc": https://claude.ai/code/artifact/daefd7ee-eb95-4476-ac02-92a735e470de
 
@@ -14,9 +14,9 @@ This file is the repo-side summary for continuity across chat sessions.
 |---|---|
 | 1. Basic scorer + rules and FAQ | Done (artifact preview: https://claude.ai/artifact/4MR4BWP7uaTz1cpkP2Ay5q) |
 | 2. Live on your phone (Pages, icon, offline, install tip) | Done (v1 live, installed on Stuart's iPhone) |
-| 3. Card-tap calculator | Not started |
-| 4. Fixing mistakes and history | Not started |
-| 5. Polish and extras | Not started |
+| 3. Fixing mistakes and history | Built as v3 on branch `m3`; waiting on play-test |
+| 4. Polish and extras | Not started |
+| 5. Card-tap calculator (optional) | Parked: decide after a few real games |
 
 Live app: https://sgoodwin-cloud.github.io/flip7-score/
 
@@ -35,22 +35,24 @@ Live app: https://sgoodwin-cloud.github.io/flip7-score/
 ### Code structure inside `index.html`
 
 - `<style>`: design-system tokens on `:root` (Rulebook light theme only; the Night theme is deliberately left out), then `fs-` components from the Flip Score design system, then screen styles.
-- Screens are `<section>`s toggled with `hidden`: `scrSetup`, `scrBoard`, `scrWinner`, `scrRules`. Sheets: `entrySheet` (keypad), `confirmSheet`, `shareSheet` (link, Copy link, Send…, install steps).
-- Script sections: state and saving → scoring helpers → rendering → setup → score entry → round flow → confirm sheet → rules and FAQ content → install tip → boot.
+- Screens are `<section>`s toggled with `hidden`. Main screens follow `state.screen`: `scrSetup`, `scrBoard`, `scrWinner`. Overlays sit on top via the `overlay` variable (not saved): `scrRules`, `scrSheet` (editable scoresheet), `scrPast` (past games), `scrPastGame` (one past game, read-only). Sheets: `entrySheet` (keypad), `confirmSheet`, `shareSheet` (link, Copy link, Send…, install steps).
+- Script sections: state and saving → scoring helpers (`settle()` re-decides game over after any change; `syncHistory()` keeps past games in step) → undo → rendering (`render(scroll)`, `sheetTable()`) → setup → score entry (current round or correcting an earlier one) → round flow → confirm sheet → scoresheet and past games → rules and FAQ content → share → install tip → boot.
 - The update banner and service worker registration are a separate script at the bottom.
 
-### Save format (localStorage key `flip7-score`)
+### Save format (localStorage key `flip7-score`), version 2
 
 ```json
-{ "v": 1, "screen": "setup|board|winner",
+{ "v": 2, "screen": "setup|board|winner",
   "draft": ["names in seat order"],
-  "game": { "players": [{"id": "...", "name": "..."}], "target": 200,
-            "rounds": [{ "<playerId>": {"pts": 26, "bust": false} }],
-            "current": { "<playerId>": {"pts": 0, "bust": true} },
-            "finished": false } }
+  "savedNames": ["most recent first, up to 16"],
+  "game": { "id": "...", "startedAt": 0, "players": [{"id": "...", "name": "..."}], "target": 200, "seq": 7,
+            "rounds": [{ "<playerId>": {"pts": 26, "bust": false, "t": 3} }],
+            "current": { "<playerId>": {"pts": 0, "bust": true, "t": 7} },
+            "finished": false },
+  "history": [{ "id": "...", "startedAt": 0, "endedAt": 0, "target": 200, "players": [], "rounds": [] }] }
 ```
 
-Totals are always worked out from `rounds`, never stored. `migrate()` upgrades older `v` values; never wipe a save.
+Totals are always worked out from `rounds`, never stored. `t` is the order scores were entered in, which Undo works back through (corrections keep their original `t`). `history` is newest first, up to 60 games; a game is added when it finishes and removed again if Undo or a correction reopens it. Abandoned games (New game mid-way) aren't kept. `migrate()` upgrades v1 saves (adds ids, `t`, saved names, history); never wipe a save.
 
 ---
 
@@ -93,3 +95,6 @@ Totals are always worked out from `rounds`, never stored. `migrate()` upgrades o
 | 19 Oct 2026 | Light mode only; no dark theme (v2) |
 | 19 Oct 2026 | Share button beside Rules: link, Copy link, native Send… where available, install steps (v2) |
 | 19 Oct 2026 | Small non-milestone changes go straight to `main`; milestones still use a test branch |
+| 19 Oct 2026 | Card-tap calculator moved to the end as optional Milestone 5; "Fixing mistakes and history" becomes Milestone 3 |
+| 19 Oct 2026 | Undo works back one score at a time, then reopens the last round (even from the winner screen) |
+| 19 Oct 2026 | Corrections happen on the scoresheet; game over is re-decided after every correction |

@@ -196,6 +196,45 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: var(--space-2); }
 @media (max-width: 380px) { .brand { font-size: 15px; } }
 
+/* Saved names */
+.label { font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+.picks { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.pick { min-height: 40px; padding: 8px 14px 6px; border: 2px solid var(--navy); border-radius: var(--radius-pill); background: var(--card-face); color: var(--navy);
+  font-family: var(--font-display); font-weight: 800; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+.pick:active { background: var(--aqua); }
+.pick:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+
+/* Scoresheet */
+.sheet-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: var(--radius-lg); background: var(--surface-raised); }
+.scoresheet { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
+.scoresheet th, .scoresheet td { padding: 0; text-align: center; border-bottom: 1px solid var(--line); }
+.scoresheet thead th { font-family: var(--font-display); font-weight: 800; font-size: 12px; letter-spacing: .06em; text-transform: uppercase;
+  padding: 10px 6px 8px; min-width: 60px; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-bottom: 2px solid var(--ink); }
+.scoresheet .rcol { position: sticky; left: 0; z-index: 1; background: var(--surface-raised); font-family: var(--font-display); font-weight: 800;
+  font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-muted); padding: 0 10px; min-width: 56px; border-right: 2px solid var(--line); }
+.scoresheet thead .rcol { z-index: 2; }
+.scoresheet .rcol small { display: block; font-size: 10px; letter-spacing: .1em; color: var(--teal-text); }
+.scoresheet td { font-family: var(--font-numeral); font-size: 24px; line-height: 1; height: 44px; }
+.cellbtn { width: 100%; height: 44px; border: 0; background: transparent; color: var(--ink); font: inherit; cursor: pointer; }
+.cellbtn:active { background: var(--line); }
+.cellbtn:focus-visible { outline: 3px solid var(--teal); outline-offset: -3px; }
+.scoresheet .bust { font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--red-text); }
+.scoresheet .is-live td, .scoresheet .is-live th { background: var(--card-face); }
+.scoresheet .is-live .cellbtn { color: var(--ink-muted); }
+.scoresheet tfoot th, .scoresheet tfoot td { border-bottom: 0; border-top: 2px solid var(--ink); }
+.scoresheet tfoot td { font-size: 30px; height: 52px; }
+.scoresheet tfoot td.is-top { background: var(--gold); color: var(--navy); }
+
+/* Past games */
+.past { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: var(--surface-raised); color: var(--ink);
+  border: 2px solid var(--line); border-radius: var(--radius-lg); padding: var(--space-3) var(--space-4); cursor: pointer; font: inherit; }
+.past:active { border-color: var(--teal); }
+.past:focus-visible { outline: 3px solid var(--teal); outline-offset: 3px; }
+.past__date { font-family: var(--font-display); font-weight: 800; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-muted); }
+.past__win { font-family: var(--font-display); font-weight: 800; font-size: 18px; line-height: 24px; letter-spacing: .06em; text-transform: uppercase; overflow-wrap: anywhere; }
+.past__win b { font-family: var(--font-numeral); font-weight: 400; font-size: 26px; margin-left: 8px; }
+.past__rest { font-size: 14px; line-height: 20px; color: var(--ink-muted); }
+
 
 /* Update banner */
 #update { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -224,10 +263,15 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <button class="fs-btn fs-btn--aqua" type="submit" id="addBtn">Add</button>
     </form>
     <p class="warn" id="setupWarn"></p>
+    <div class="stack" id="savedWrap" hidden>
+      <span class="label">Played before: tap to add</span>
+      <div class="picks" id="savedNames"></div>
+    </div>
     <p class="fs-aside" id="installTip" hidden><b>Tip:</b> To keep this on your iPhone, tap Share, then Add to Home Screen. It then works offline, with no signal.</p>
     <div class="stack" id="seatList"></div>
     <p class="muted" id="seatCount"></p>
     <button class="fs-btn fs-btn--block" id="startBtn" type="button">Start game</button>
+    <button class="fs-btn fs-btn--ghost fs-btn--small" id="pastBtn" type="button" hidden>Past games</button>
   </section>
 
   <!-- SCOREBOARD -->
@@ -240,7 +284,11 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <p class="fs-aside" id="boardHint"><b>Note:</b> Tap a player to enter their score for this round.</p>
     <div class="stack" id="playerList"></div>
     <button class="fs-btn fs-btn--navy fs-btn--block" id="endRoundBtn" type="button">End round</button>
-    <button class="fs-btn fs-btn--ghost fs-btn--small" id="newGameBtn" type="button">New game</button>
+    <button class="fs-btn fs-btn--ghost fs-btn--small fs-btn--block" id="undoBtn" type="button" hidden>Undo</button>
+    <div class="btn-row">
+      <button class="fs-btn fs-btn--aqua fs-btn--small" id="sheetBtn" type="button">Scoresheet</button>
+      <button class="fs-btn fs-btn--ghost fs-btn--small" id="newGameBtn" type="button">New game</button>
+    </div>
   </section>
 
   <!-- WINNER -->
@@ -258,6 +306,42 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <button class="fs-btn" id="rematchBtn" type="button">Rematch</button>
       <button class="fs-btn fs-btn--navy" id="freshBtn" type="button">New players</button>
     </div>
+    <div class="btn-row">
+      <button class="fs-btn fs-btn--aqua fs-btn--small" id="winSheetBtn" type="button">Scoresheet</button>
+      <button class="fs-btn fs-btn--ghost fs-btn--small" id="winPastBtn" type="button">Past games</button>
+    </div>
+    <button class="fs-btn fs-btn--ghost fs-btn--small fs-btn--block" id="winUndoBtn" type="button" hidden>Undo</button>
+  </section>
+
+  <!-- SCORESHEET -->
+  <section class="screen" id="scrSheet" hidden>
+    <div class="round-bar">
+      <div class="fs-flag"><span>Scoresheet</span></div>
+      <button class="fs-btn fs-btn--small" id="sheetClose" type="button">Back</button>
+    </div>
+    <p class="fs-aside"><b>Note:</b> Tap any score to correct it. The totals update straight away.</p>
+    <div id="sheetTable"></div>
+  </section>
+
+  <!-- PAST GAMES -->
+  <section class="screen" id="scrPast" hidden>
+    <div class="round-bar">
+      <div class="fs-flag"><span>Past games</span></div>
+      <button class="fs-btn fs-btn--small" id="pastClose" type="button">Back</button>
+    </div>
+    <div class="stack" id="pastList"></div>
+  </section>
+
+  <!-- ONE PAST GAME -->
+  <section class="screen" id="scrPastGame" hidden>
+    <div class="round-bar">
+      <div class="fs-flag"><span id="pgTitle">Past game</span></div>
+      <button class="fs-btn fs-btn--small" id="pgClose" type="button">Back</button>
+    </div>
+    <p class="lead" id="pgSummary"></p>
+    <div id="pgTable"></div>
+    <button class="fs-btn fs-btn--block" id="pgAgain" type="button">Play again with these players</button>
+    <button class="fs-btn fs-btn--ghost fs-btn--small" id="pgDelete" type="button">Delete this game</button>
   </section>
 
   <!-- RULES -->
@@ -335,23 +419,46 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '2';
+  const APP_VERSION = '3';
   const SAVE_KEY = 'flip7-score';
-  const SAVE_VERSION = 1;
+  const SAVE_VERSION = 2;
   const TARGET = 200;
   const MIN_PLAYERS = 2, MAX_PLAYERS = 8, MAX_ROUND = 400;
+  const MAX_SAVED_NAMES = 16, MAX_HISTORY = 60;
 
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const uid = () => Math.random().toString(36).slice(2, 9);
 
   /* ---------- State & saving ---------- */
-  // Save bundle: { v, screen, draft: [names], game: { players:[{id,name}], target, rounds:[{id:{pts,bust}}], current:{id:{pts,bust}}, finished } }
-  function freshState() { return { v: SAVE_VERSION, screen: 'setup', draft: [], game: null }; }
+  // Save bundle (v2):
+  // { v, screen: 'setup'|'board'|'winner', draft: [names], savedNames: [names, most recent first],
+  //   game: { id, startedAt, players: [{id, name}], target, seq,
+  //           rounds: [{ <playerId>: {pts, bust, t} }], current: { <playerId>: {pts, bust, t} }, finished },
+  //   history: [{ id, startedAt, endedAt, target, players, rounds }] }   (newest first)
+  // An entry's t is the order it was entered in; Undo works back through it.
+  function freshState() { return { v: SAVE_VERSION, screen: 'setup', draft: [], savedNames: [], game: null, history: [] }; }
   function migrate(s) {
     if (!s || typeof s !== 'object') return null;
-    // Future versions upgrade older saves here rather than wiping them.
-    if (s.v === SAVE_VERSION) return s;
+    if (s.v === 1) {
+      // v1 to v2: add a game id, entry order, saved names and history. Nothing is lost.
+      const g = s.game;
+      s.savedNames = [];
+      s.history = [];
+      if (g) {
+        g.id = uid(); g.startedAt = Date.now();
+        let seq = 0;
+        g.rounds.concat([g.current]).forEach((r) => g.players.forEach((p) => { if (r[p.id]) r[p.id].t = ++seq; }));
+        g.seq = seq;
+        s.savedNames = g.players.map((p) => p.name);
+        if (g.finished) s.history.unshift(snapshot(g));
+      }
+      s.v = 2;
+    }
+    if (s.v === SAVE_VERSION) {
+      s.draft = s.draft || []; s.savedNames = s.savedNames || []; s.history = s.history || [];
+      return s;
+    }
     return null;
   }
   function load() {
@@ -360,6 +467,9 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable: play on */ } }
 
   let state = load() || freshState();
+  let overlay = null;   // 'rules' | 'sheet' | 'past' | 'pastGame', shown over the main screen
+  let rulesFrom = null; // where Rules returns to
+  let pastId = null;    // which past game is open
 
   /* ---------- Scoring helpers (totals always derived from rounds) ---------- */
   function totalFor(g, id) { return g.rounds.reduce((t, r) => t + (r[id] ? r[id].pts : 0), 0); }
@@ -374,22 +484,75 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const tied = s.filter((p) => p.total === s[0].total);
     return tied.length > 1 ? { over: false, tie: true, tied } : { over: true, winner: s[0] };
   }
+  function snapshot(g) {
+    return { id: g.id, startedAt: g.startedAt, endedAt: Date.now(), target: g.target,
+      players: g.players.map((p) => ({ id: p.id, name: p.name })), rounds: JSON.parse(JSON.stringify(g.rounds)) };
+  }
+  // Keep past games in step with the current game: finished games are listed, reopened ones are not.
+  function syncHistory() {
+    const g = state.game; if (!g) return;
+    const i = state.history.findIndex((h) => h.id === g.id);
+    if (g.finished) {
+      const snap = snapshot(g);
+      if (i >= 0) { snap.endedAt = state.history[i].endedAt; state.history[i] = snap; }
+      else state.history.unshift(snap);
+      if (state.history.length > MAX_HISTORY) state.history.length = MAX_HISTORY;
+    } else if (i >= 0) state.history.splice(i, 1);
+  }
+  // Re-decide whether the game is over after rounds change (end of round, a correction, an undo).
+  function settle() {
+    const g = state.game; if (!g) return;
+    const res = checkEnd(g);
+    if (g.finished && !res.over) { g.finished = false; state.screen = 'board'; }
+    else if (!g.finished && res.over && g.rounds.length && !Object.keys(g.current).length) { g.finished = true; state.screen = 'winner'; }
+    syncHistory();
+  }
+  function rememberNames(names) {
+    names.slice().reverse().forEach((n) => {
+      state.savedNames = [n].concat(state.savedNames.filter((x) => x.toLowerCase() !== n.toLowerCase()));
+    });
+    if (state.savedNames.length > MAX_SAVED_NAMES) state.savedNames.length = MAX_SAVED_NAMES;
+  }
+
+  /* ---------- Undo ---------- */
+  function latestIn(r) {
+    let best = null;
+    Object.keys(r).forEach((id) => { if (!best || (r[id].t || 0) > (r[best].t || 0)) best = id; });
+    return best;
+  }
+  function undoInfo() {
+    const g = state.game; if (!g) return null;
+    const id = latestIn(g.current);
+    if (id) {
+      const p = g.players.find((x) => x.id === id), e = g.current[id];
+      return { kind: 'entry', id, label: 'Undo ' + p.name + '’s ' + (e.bust ? 'bust' : e.pts) };
+    }
+    if (g.rounds.length) return { kind: 'round', label: 'Undo end of round ' + g.rounds.length };
+    return null;
+  }
+  function undo() {
+    const g = state.game, u = undoInfo(); if (!u) return;
+    if (u.kind === 'entry') delete g.current[u.id];
+    else { g.current = g.rounds.pop(); g.finished = false; state.screen = 'board'; syncHistory(); }
+    save(); render(u.kind === 'round');
+  }
 
   /* ---------- Rendering ---------- */
-  function show(screen) {
-    ['Setup', 'Board', 'Winner', 'Rules'].forEach((n) => { $('scr' + n).hidden = n.toLowerCase() !== screen; });
-    $('rulesBtn').hidden = screen === 'rules';
-    window.scrollTo(0, 0);
+  const SCREENS = { setup: 'scrSetup', board: 'scrBoard', winner: 'scrWinner', rules: 'scrRules', sheet: 'scrSheet', past: 'scrPast', pastGame: 'scrPastGame' };
+  function render(scroll) {
+    const view = overlay || state.screen;
+    Object.keys(SCREENS).forEach((k) => { $(SCREENS[k]).hidden = k !== view; });
+    $('rulesBtn').hidden = view === 'rules';
+    if (view === 'setup') renderSetup();
+    if (view === 'board') renderBoard();
+    if (view === 'winner') renderWinner();
+    if (view === 'sheet') renderSheet();
+    if (view === 'past') renderPast();
+    if (view === 'pastGame') renderPastGame();
+    $('topSub').textContent = 'Race to ' + (state.game && state.screen !== 'setup' ? state.game.target : TARGET);
+    if (scroll) window.scrollTo(0, 0);
   }
-
-  function render() {
-    const scr = state.screen;
-    show(scr);
-    if (scr === 'setup') renderSetup();
-    if (scr === 'board') renderBoard();
-    if (scr === 'winner') renderWinner();
-    $('topSub').textContent = state.game && scr !== 'setup' ? 'Race to ' + state.game.target : 'Race to ' + TARGET;
-  }
+  const go = () => render(true);
 
   const ICON_UP = '<svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
   const ICON_X = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
@@ -406,6 +569,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     $('startBtn').disabled = d.length < MIN_PLAYERS;
     $('addBtn').disabled = d.length >= MAX_PLAYERS;
     $('nameInput').disabled = d.length >= MAX_PLAYERS;
+    const inDraft = new Set(d.map((n) => n.toLowerCase()));
+    const picks = state.savedNames.filter((n) => !inDraft.has(n.toLowerCase()));
+    $('savedWrap').hidden = !picks.length || d.length >= MAX_PLAYERS;
+    $('savedNames').innerHTML = picks.map((n) => '<button type="button" class="pick" data-pick="' + esc(n) + '" aria-label="Add ' + esc(n) + '">+ ' + esc(n) + '</button>').join('');
+    $('pastBtn').hidden = !state.history.length;
+    $('pastBtn').textContent = 'Past games (' + state.history.length + ')';
   }
 
   function renderBoard() {
@@ -430,7 +599,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const all = done === g.players.length;
     $('endRoundBtn').disabled = !all;
     $('endRoundBtn').textContent = all ? 'End round ' + roundNo : 'End round (' + (g.players.length - done) + ' to go)';
-    $('boardHint').hidden = done > 0;
+    $('boardHint').hidden = done > 0 || g.rounds.length > 0;
+    const u = undoInfo();
+    $('undoBtn').hidden = !u;
+    if (u) $('undoBtn').textContent = u.label;
     const t = checkEnd(g);
     if (t.tie && g.rounds.length) {
       $('tieBanner').hidden = false;
@@ -455,20 +627,91 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       return '<div class="standing"><span class="standing__pos">' + pos + '</span><span class="standing__name">' + esc(p.name) +
         '</span><span class="standing__score">' + p.total + '</span></div>';
     }).join('');
+    const u = undoInfo();
+    $('winUndoBtn').hidden = !u;
+    if (u) $('winUndoBtn').textContent = u.label;
+  }
+
+  // Round-by-round table. editable: tap a score to correct it. live: include the round being played.
+  function sheetTable(g, editable, live) {
+    const tot = {};
+    g.players.forEach((p) => { tot[p.id] = totalFor(g, p.id); });
+    const top = Math.max.apply(null, g.players.map((p) => tot[p.id]));
+    const cell = (e, r, p, roundNo) => {
+      const txt = !e ? '–' : e.bust ? '<span class="bust">Bust</span>' : e.pts;
+      if (!editable) return '<td>' + txt + '</td>';
+      const said = !e ? 'not scored yet' : e.bust ? 'bust' : e.pts + ' points';
+      return '<td><button type="button" class="cellbtn" data-r="' + r + '" data-p="' + p.id + '" aria-label="' +
+        esc(p.name) + ', round ' + roundNo + ': ' + said + '. Tap to change.">' + txt + '</button></td>';
+    };
+    let h = '<div class="sheet-wrap"><table class="scoresheet"><thead><tr><th scope="col" class="rcol">Round</th>';
+    g.players.forEach((p) => { h += '<th scope="col" title="' + esc(p.name) + '">' + esc(p.name) + '</th>'; });
+    h += '</tr></thead><tbody>';
+    g.rounds.forEach((r, i) => {
+      h += '<tr><th scope="row" class="rcol">' + (i + 1) + '</th>' + g.players.map((p) => cell(r[p.id], i, p, i + 1)).join('') + '</tr>';
+    });
+    if (live) {
+      const n = g.rounds.length + 1;
+      h += '<tr class="is-live"><th scope="row" class="rcol">' + n + '<small>now</small></th>' + g.players.map((p) => cell(g.current[p.id], 'cur', p, n)).join('') + '</tr>';
+    }
+    h += '</tbody><tfoot><tr><th scope="row" class="rcol">Total</th>' +
+      g.players.map((p) => '<td' + (g.rounds.length && tot[p.id] === top ? ' class="is-top"' : '') + '>' + tot[p.id] + '</td>').join('') +
+      '</tr></tfoot></table></div>';
+    return h;
+  }
+
+  function renderSheet() {
+    const g = state.game;
+    if (!g) { overlay = null; return render(true); }
+    $('sheetTable').innerHTML = sheetTable(g, true, !g.finished);
+  }
+
+  function fmtDate(t) {
+    const d = new Date(t), o = { weekday: 'short', day: 'numeric', month: 'short' };
+    if (d.getFullYear() !== new Date().getFullYear()) o.year = 'numeric';
+    return d.toLocaleDateString('en-GB', o);
+  }
+
+  function renderPast() {
+    $('pastList').innerHTML = state.history.length ? state.history.map((h) => {
+      const s = standings(h);
+      return '<button type="button" class="past" data-past="' + h.id + '">' +
+        '<span class="past__date">' + fmtDate(h.endedAt) + ' · ' + h.rounds.length + ' round' + (h.rounds.length === 1 ? '' : 's') + '</span>' +
+        '<span class="past__win">' + esc(s[0].name) + '<b>' + s[0].total + '</b></span>' +
+        '<span class="past__rest">' + s.slice(1).map((p) => esc(p.name) + ' ' + p.total).join(' · ') + '</span></button>';
+    }).join('') : '<p class="muted">Finished games appear here.</p>';
+  }
+
+  function renderPastGame() {
+    const h = state.history.find((x) => x.id === pastId);
+    if (!h) { overlay = 'past'; return render(true); }
+    const s = standings(h);
+    $('pgTitle').textContent = fmtDate(h.endedAt);
+    $('pgSummary').innerHTML = '<b>' + esc(s[0].name) + '</b> won with ' + s[0].total + ' after ' + h.rounds.length + ' round' + (h.rounds.length === 1 ? '' : 's') + '.';
+    $('pgTable').innerHTML = sheetTable(h, false, false);
   }
 
   /* ---------- Setup actions ---------- */
+  function addName(raw) {
+    const name = String(raw).trim().replace(/\s+/g, ' ');
+    if (!name) return '';
+    if (state.draft.length >= MAX_PLAYERS) return 'That’s the maximum of ' + MAX_PLAYERS + ' players.';
+    if (state.draft.some((n) => n.toLowerCase() === name.toLowerCase())) return name + ' is already playing. Add an initial to tell them apart.';
+    state.draft.push(name);
+    return '';
+  }
   $('addForm').addEventListener('submit', (ev) => {
     ev.preventDefault();
-    const name = $('nameInput').value.trim().replace(/\s+/g, ' ');
-    $('setupWarn').textContent = '';
-    if (!name) return;
-    if (state.draft.length >= MAX_PLAYERS) { $('setupWarn').textContent = 'That’s the maximum of ' + MAX_PLAYERS + ' players.'; return; }
-    if (state.draft.some((n) => n.toLowerCase() === name.toLowerCase())) { $('setupWarn').textContent = name + ' is already playing. Add an initial to tell them apart.'; return; }
-    state.draft.push(name);
-    $('nameInput').value = '';
+    const warn = addName($('nameInput').value);
+    $('setupWarn').textContent = warn;
+    if (!warn) $('nameInput').value = '';
     save(); renderSetup();
     $('nameInput').focus();
+  });
+  $('savedNames').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-pick]'); if (!b) return;
+    $('setupWarn').textContent = addName(b.dataset.pick);
+    save(); renderSetup();
   });
   $('seatList').addEventListener('click', (ev) => {
     const up = ev.target.closest('[data-up]'), del = ev.target.closest('[data-del]');
@@ -478,28 +721,31 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   });
   $('startBtn').addEventListener('click', () => {
     if (state.draft.length < MIN_PLAYERS) return;
-    startGame(state.draft.map((name) => ({ id: uid(), name })));
+    startGame(state.draft.slice());
   });
-  function startGame(players) {
-    state.game = { players, target: TARGET, rounds: [], current: {}, finished: false };
-    state.screen = 'board';
-    save(); render();
+  function startGame(names) {
+    state.game = { id: uid(), startedAt: Date.now(), players: names.map((name) => ({ id: uid(), name })),
+      target: TARGET, seq: 0, rounds: [], current: {}, finished: false };
+    rememberNames(names);
+    state.screen = 'board'; overlay = null;
+    save(); go();
   }
 
-  /* ---------- Score entry ---------- */
-  let entry = null; // { id, digits }
+  /* ---------- Score entry (current round, or correcting an earlier one) ---------- */
+  let entry = null; // { id, round: index of an earlier round, or null for the current one, digits }
   const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
   $('keypad').innerHTML = KEYS.map((k) =>
     '<button type="button" class="key' + (k.length > 1 ? ' key--fn' : '') + '" data-key="' + k + '">' +
     (k === 'clear' ? 'Clear' : k === 'back' ? 'Delete' : k) + '</button>').join('');
 
-  function openEntry(id) {
+  function openEntry(id, round) {
     const g = state.game;
     const p = g.players.find((x) => x.id === id);
-    const e = g.current[id];
-    entry = { id, digits: e && !e.bust ? String(e.pts) : '' };
+    const past = round !== null && round !== undefined;
+    const e = past ? g.rounds[round][id] : g.current[id];
+    entry = { id, round: past ? round : null, digits: e && !e.bust ? String(e.pts) : '' };
     $('entryName').textContent = p.name;
-    $('entryRound').textContent = 'Round ' + (g.rounds.length + 1);
+    $('entryRound').textContent = 'Round ' + ((past ? round : g.rounds.length) + 1) + (past ? ' · correcting' : '');
     $('entryWarn').textContent = '';
     updateReadout();
     $('entrySheet').hidden = false;
@@ -509,6 +755,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     const n = $('entryNum');
     n.textContent = entry.digits || '0';
     n.classList.toggle('is-empty', !entry.digits);
+  }
+  function storeEntry(pts, bust) {
+    const g = state.game;
+    if (entry.round === null) {
+      g.current[entry.id] = { pts, bust, t: ++g.seq };
+    } else {
+      const prev = g.rounds[entry.round][entry.id] || {};
+      g.rounds[entry.round][entry.id] = { pts, bust, t: prev.t || 0 };
+      settle();
+    }
+    save(); closeEntry(); render(false);
   }
   $('keypad').addEventListener('click', (ev) => {
     const k = ev.target.closest('[data-key]'); if (!k || !entry) return;
@@ -523,19 +780,18 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (!entry) return;
     const pts = entry.digits === '' ? 0 : parseInt(entry.digits, 10);
     if (pts > MAX_ROUND) { $('entryWarn').textContent = 'That’s more than one round can score. Check the total.'; return; }
-    state.game.current[entry.id] = { pts, bust: false };
-    save(); closeEntry(); renderBoard();
+    storeEntry(pts, false);
   });
-  $('bustBtn').addEventListener('click', () => {
-    if (!entry) return;
-    state.game.current[entry.id] = { pts: 0, bust: true };
-    save(); closeEntry(); renderBoard();
-  });
+  $('bustBtn').addEventListener('click', () => { if (entry) storeEntry(0, true); });
   $('entryCancel').addEventListener('click', closeEntry);
   $('entrySheet').addEventListener('click', (ev) => { if (ev.target === $('entrySheet')) closeEntry(); });
 
   $('playerList').addEventListener('click', (ev) => {
-    const b = ev.target.closest('[data-player]'); if (b) openEntry(b.dataset.player);
+    const b = ev.target.closest('[data-player]'); if (b) openEntry(b.dataset.player, null);
+  });
+  $('sheetTable').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-p]'); if (!b) return;
+    openEntry(b.dataset.p, b.dataset.r === 'cur' ? null : +b.dataset.r);
   });
 
   /* ---------- Round flow ---------- */
@@ -544,15 +800,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     if (scoredCount(g) < g.players.length) return;
     g.rounds.push(g.current);
     g.current = {};
-    const res = checkEnd(g);
-    if (res.over) { g.finished = true; state.screen = 'winner'; }
-    save(); render();
+    settle();
+    save(); go();
   });
+  $('undoBtn').addEventListener('click', undo);
+  $('winUndoBtn').addEventListener('click', undo);
 
   /* ---------- Confirm sheet ---------- */
   let confirmAction = null;
-  function confirmThen(title, text, yesLabel, fn) {
-    $('confirmTitle').textContent = title; $('confirmText').textContent = text; $('confirmYes').textContent = yesLabel;
+  function confirmThen(title, text, yesLabel, noLabel, fn) {
+    $('confirmTitle').textContent = title; $('confirmText').textContent = text;
+    $('confirmYes').textContent = yesLabel; $('confirmNo').textContent = noLabel;
     confirmAction = fn; $('confirmSheet').hidden = false;
   }
   $('confirmNo').addEventListener('click', () => { $('confirmSheet').hidden = true; confirmAction = null; });
@@ -560,17 +818,42 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   $('confirmSheet').addEventListener('click', (ev) => { if (ev.target === $('confirmSheet')) { $('confirmSheet').hidden = true; confirmAction = null; } });
 
   $('newGameBtn').addEventListener('click', () => {
-    confirmThen('New game?', 'This clears the scores for the game in progress. The same players stay listed so you can start again quickly.', 'Clear game', () => {
+    confirmThen('New game?', 'This clears the game in progress, and it won’t be saved to past games. The same players stay listed so you can start again quickly.', 'Clear game', 'Keep playing', () => {
       state.draft = state.game.players.map((p) => p.name);
-      state.game = null; state.screen = 'setup'; save(); render();
+      state.game = null; state.screen = 'setup'; save(); go();
     });
   });
-  $('rematchBtn').addEventListener('click', () => {
-    startGame(state.game.players.map((p) => ({ id: uid(), name: p.name })));
-  });
+  $('rematchBtn').addEventListener('click', () => { startGame(state.game.players.map((p) => p.name)); });
   $('freshBtn').addEventListener('click', () => {
     state.draft = state.game.players.map((p) => p.name);
-    state.game = null; state.screen = 'setup'; save(); render();
+    state.game = null; state.screen = 'setup'; save(); go();
+  });
+
+  /* ---------- Scoresheet and past games ---------- */
+  const openOverlay = (name) => { overlay = name; go(); };
+  $('sheetBtn').addEventListener('click', () => openOverlay('sheet'));
+  $('winSheetBtn').addEventListener('click', () => openOverlay('sheet'));
+  $('sheetClose').addEventListener('click', () => openOverlay(null));
+  $('pastBtn').addEventListener('click', () => openOverlay('past'));
+  $('winPastBtn').addEventListener('click', () => openOverlay('past'));
+  $('pastClose').addEventListener('click', () => openOverlay(null));
+  $('pastList').addEventListener('click', (ev) => {
+    const b = ev.target.closest('[data-past]'); if (!b) return;
+    pastId = b.dataset.past; openOverlay('pastGame');
+  });
+  $('pgClose').addEventListener('click', () => openOverlay('past'));
+  $('pgAgain').addEventListener('click', () => {
+    const h = state.history.find((x) => x.id === pastId); if (!h) return;
+    const start = () => startGame(h.players.map((p) => p.name));
+    if (state.game && !state.game.finished) {
+      confirmThen('Start a new game?', 'There’s a game in progress. Starting this one clears it, and it won’t be saved to past games.', 'Start new game', 'Cancel', start);
+    } else start();
+  });
+  $('pgDelete').addEventListener('click', () => {
+    confirmThen('Delete this game?', 'It will be removed from past games. This can’t be undone.', 'Delete', 'Cancel', () => {
+      state.history = state.history.filter((x) => x.id !== pastId);
+      save(); openOverlay('past');
+    });
   });
 
   /* ---------- Rules & FAQ ---------- */
@@ -619,8 +902,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   }
   $('tabRules').addEventListener('click', () => setTab(false));
   $('tabFaq').addEventListener('click', () => setTab(true));
-  $('rulesBtn').addEventListener('click', () => { show('rules'); });
-  $('rulesClose').addEventListener('click', () => { render(); });
+  $('rulesBtn').addEventListener('click', () => { rulesFrom = overlay; openOverlay('rules'); });
+  $('rulesClose').addEventListener('click', () => { const back = rulesFrom; rulesFrom = null; openOverlay(back); });
 
   /* ---------- Share ---------- */
   const SHARE_URL = 'https://sgoodwin-cloud.github.io/flip7-score/';
@@ -661,7 +944,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   $('ver').textContent = 'v' + APP_VERSION;
   if (state.screen === 'board' && !state.game) state.screen = 'setup';
   if (state.screen === 'winner' && !(state.game && state.game.finished)) state.screen = state.game ? 'board' : 'setup';
-  render();
+  go();
 
   // Self-test of the end-of-game rule (console only)
   (function test() {
