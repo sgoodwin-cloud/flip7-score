@@ -286,7 +286,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
     <button class="fs-btn fs-btn--navy fs-btn--block" id="endRoundBtn" type="button">End round</button>
     <button class="fs-btn fs-btn--ghost fs-btn--small fs-btn--block" id="undoBtn" type="button" hidden>Undo</button>
     <div class="btn-row">
-      <button class="fs-btn fs-btn--aqua fs-btn--small" id="sheetBtn" type="button">Scoresheet</button>
+      <button class="fs-btn fs-btn--aqua fs-btn--small" id="sheetBtn" type="button">View Scoresheet</button>
       <button class="fs-btn fs-btn--ghost fs-btn--small" id="newGameBtn" type="button">New game</button>
     </div>
   </section>
@@ -307,7 +307,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
       <button class="fs-btn fs-btn--navy" id="freshBtn" type="button">New players</button>
     </div>
     <div class="btn-row">
-      <button class="fs-btn fs-btn--aqua fs-btn--small" id="winSheetBtn" type="button">Scoresheet</button>
+      <button class="fs-btn fs-btn--aqua fs-btn--small" id="winSheetBtn" type="button">View Scoresheet</button>
       <button class="fs-btn fs-btn--ghost fs-btn--small" id="winPastBtn" type="button">Past games</button>
     </div>
     <button class="fs-btn fs-btn--ghost fs-btn--small fs-btn--block" id="winUndoBtn" type="button" hidden>Undo</button>
@@ -962,6 +962,8 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
     try {
+      // Only reload on a controller change if a worker was already running (an update), never on the very first install.
+      const hadController = !!navigator.serviceWorker.controller;
       const reg = await navigator.serviceWorker.register('sw.js');
       const btn = document.getElementById('update');
       let reloading = false;
@@ -989,7 +991,7 @@ if ('serviceWorker' in navigator) {
       track(reg.installing);
       reg.addEventListener('updatefound', () => track(reg.installing));
       reg.update().catch(() => {});
-      navigator.serviceWorker.addEventListener('controllerchange', reload);
+      navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) reload(); });
       document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
     } catch (e) { /* no service worker (e.g. artifact preview): app still works */ }
   });

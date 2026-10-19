@@ -1,6 +1,6 @@
 # Flip 7 Score — design and release notes
 
-Last updated: 19 Oct 2026 (v3 on branch `m3`)
+Last updated: 19 Oct 2026 (v3)
 
 The full design doc (goals, scoring rules, rules/FAQ plan, screens, data model, milestones, Swipe Snake lessons) is Stuart's Claude doc "Flip 7 Score Tracker — Design Doc": https://claude.ai/code/artifact/daefd7ee-eb95-4476-ac02-92a735e470de
 
@@ -14,7 +14,7 @@ This file is the repo-side summary for continuity across chat sessions.
 |---|---|
 | 1. Basic scorer + rules and FAQ | Done (artifact preview: https://claude.ai/artifact/4MR4BWP7uaTz1cpkP2Ay5q) |
 | 2. Live on your phone (Pages, icon, offline, install tip) | Done (v1 live, installed on Stuart's iPhone) |
-| 3. Fixing mistakes and history | Built as v3 on branch `m3`; waiting on play-test |
+| 3. Fixing mistakes and history | Done (v3) |
 | 4. Polish and extras | Not started |
 | 5. Card-tap calculator (optional) | Parked: decide after a few real games |
 
@@ -75,6 +75,7 @@ Totals are always worked out from `rounds`, never stored. `t` is the order score
 - No blanket `preventDefault()` on touches. Buttons use `touch-action: manipulation` to stop double-tap zoom.
 - The service worker installs with `cache: 'reload'` so updates never store stale files.
 - The update banner reloads only once the new worker reports `activated` (timer is a last resort).
+- `controllerchange` only reloads the page when a worker was already in charge (an update). Otherwise the very first visit reloads itself a second after opening and can lose what was just typed (fixed in v3).
 - The first time the update mechanism itself changes, the phone may need a full close and reopen.
 - Home screen apps keep their own storage, separate from Safari. Deleting the icon deletes saved games.
 - No browser `alert()`/`confirm()`: confirmations are built into the page.
@@ -98,3 +99,4 @@ Totals are always worked out from `rounds`, never stored. `t` is the order score
 | 19 Oct 2026 | Card-tap calculator moved to the end as optional Milestone 5; "Fixing mistakes and history" becomes Milestone 3 |
 | 19 Oct 2026 | Undo works back one score at a time, then reopens the last round (even from the winner screen) |
 | 19 Oct 2026 | Corrections happen on the scoresheet; game over is re-decided after every correction |
+| 19 Oct 2026 | Button label "View Scoresheet" (Stuart's wording); Milestone 3 merged to `main` as v3 |
