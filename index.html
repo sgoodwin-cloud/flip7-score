@@ -22,7 +22,7 @@
 @font-face { font-family: "Yellowtail"; font-weight: 400; font-display: swap; src: url(fonts/yellowtail-latin-400-normal.woff2) format("woff2"); }
 /* Safe areas (the artifact wrapper did this for us) */
 :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
-/* Layout: one phone-width column; sticky header with flag title and Rules; bottom sheets for score entry. Tokens from the Flip Score design system. */
+/* Light (Rulebook) theme only, by choice. Layout: one phone-width column; sticky header with flag title and Rules; bottom sheets for score entry. Tokens from the Flip Score design system. */
 :root {
   --surface: #fef8d4; --surface-raised: #fffcea; --line: #e6d89a;
   --ink: #2e3192; --ink-muted: #5b5ea6; --navy: #2e3192;
@@ -39,17 +39,9 @@
   --font-script: "Yellowtail", cursive;
   --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-6: 24px; --space-8: 32px;
   --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-pill: 999px;
+  color-scheme: light;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --surface: #181b4f; --surface-raised: #23277a; --line: #3a3f8f;
-  --ink: #fef8d4; --ink-muted: #c9c6e8; --ribbon: #f8d460; --ribbon-ink: #2e3192; --highlight: #fffcea;
-  --teal: #5fc8c4; --teal-text: #5fc8c4; --red-text: #ff6a5e; --red-ink: #181b4f;
-  --scrim: rgba(5, 6, 30, .7); --shadow-button: 0 4px 0 0 #0b0d2e; color-scheme: dark; } }
-:root[data-theme="dark"] {
-  --surface: #181b4f; --surface-raised: #23277a; --line: #3a3f8f;
-  --ink: #fef8d4; --ink-muted: #c9c6e8; --ribbon: #f8d460; --ribbon-ink: #2e3192; --highlight: #fffcea;
-  --teal: #5fc8c4; --teal-text: #5fc8c4; --red-text: #ff6a5e; --red-ink: #181b4f;
-  --scrim: rgba(5, 6, 30, .7); --shadow-button: 0 4px 0 0 #0b0d2e; color-scheme: dark; }
+
 
 /* Lesson from Swipe Snake: hidden always wins over any layout rule */
 [hidden] { display: none !important; }
@@ -62,7 +54,7 @@ button { touch-action: manipulation; font: inherit; }
   padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 var(--space-8); }
 
 /* Header */
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--surface); }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--navy); }
 .top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface);
   display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);
   padding-block: var(--space-3); border-bottom: 2px solid var(--line); margin-bottom: var(--space-4); }
@@ -196,6 +188,14 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .source a { color: var(--teal-text); }
 .ver { text-align: center; font-size: 12px; color: var(--ink-muted); }
 
+/* Share */
+.top-actions { display: flex; gap: var(--space-2); flex: none; }
+.share-link { font: 700 16px/22px var(--font-sans); text-overflow: ellipsis; }
+.btn-row--single { grid-template-columns: 1fr; }
+.copied { margin: 0; min-height: 20px; text-align: center; font-weight: 700; font-size: 14px; color: var(--teal-text); }
+.steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: var(--space-2); }
+@media (max-width: 380px) { .brand { font-size: 15px; } }
+
 
 /* Update banner */
 #update { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
@@ -209,7 +209,10 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <div class="wrap">
   <header class="top">
     <div class="brand">Flip 7 Score<small id="topSub">Race to 200</small></div>
-    <button class="fs-btn fs-btn--ghost fs-btn--small" id="rulesBtn" type="button">Rules</button>
+    <div class="top-actions">
+      <button class="fs-btn fs-btn--ghost fs-btn--small" id="shareBtn" type="button">Share</button>
+      <button class="fs-btn fs-btn--ghost fs-btn--small" id="rulesBtn" type="button">Rules</button>
+    </div>
   </header>
 
   <!-- SETUP -->
@@ -306,10 +309,33 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   </div>
 </div>
 
+<!-- Share sheet -->
+<div class="scrim" id="shareSheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+    <div class="fs-flag"><span id="shareTitle">Share the app</span></div>
+    <p class="lead">Send this link to anyone who wants to keep score. It's free, with no account or app store needed.</p>
+    <input class="field share-link" id="shareLink" readonly aria-label="App link">
+    <div class="btn-row" id="shareBtns">
+      <button class="fs-btn" id="copyBtn" type="button">Copy link</button>
+      <button class="fs-btn fs-btn--aqua" id="sendBtn" type="button" hidden>Send…</button>
+    </div>
+    <p class="copied" id="copyStatus" role="status"></p>
+    <div class="stack">
+      <span class="fs-ribbon">What they do next</span>
+      <ol class="steps">
+        <li>Open the link in <b>Safari</b> on an iPhone, or <b>Chrome</b> on Android.</li>
+        <li>On iPhone, tap <b>Share</b>, then <b>Add to Home Screen</b>. On Android, tap the <b>⋮</b> menu, then <b>Add to home screen</b>.</li>
+        <li>Open it once from the new icon while they have signal. After that it works offline.</li>
+      </ol>
+    </div>
+    <button class="fs-btn fs-btn--navy fs-btn--block" id="shareDone" type="button">Done</button>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '1';
+  const APP_VERSION = '2';
   const SAVE_KEY = 'flip7-score';
   const SAVE_VERSION = 1;
   const TARGET = 200;
@@ -595,6 +621,35 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   $('tabFaq').addEventListener('click', () => setTab(true));
   $('rulesBtn').addEventListener('click', () => { show('rules'); });
   $('rulesClose').addEventListener('click', () => { render(); });
+
+  /* ---------- Share ---------- */
+  const SHARE_URL = 'https://sgoodwin-cloud.github.io/flip7-score/';
+  const SHARE_TEXT = 'Flip 7 score keeper. Open it in Safari, tap Share, then Add to Home Screen.';
+  const canSend = (() => { try { return typeof navigator.share === 'function' && window.top === window.self; } catch (e) { return false; } })();
+  $('shareLink').value = SHARE_URL;
+  $('sendBtn').hidden = !canSend;
+  $('shareBtns').classList.toggle('btn-row--single', !canSend);
+  const closeShare = () => { $('shareSheet').hidden = true; };
+  $('shareBtn').addEventListener('click', () => {
+    $('copyStatus').textContent = ''; $('copyBtn').textContent = 'Copy link'; $('shareSheet').hidden = false;
+  });
+  $('shareDone').addEventListener('click', closeShare);
+  $('shareSheet').addEventListener('click', (ev) => { if (ev.target === $('shareSheet')) closeShare(); });
+  $('copyBtn').addEventListener('click', () => {
+    const done = () => { $('copyBtn').textContent = 'Copied'; $('copyStatus').textContent = 'Link copied. Paste it into a message to send it.'; };
+    const fallback = () => {
+      const f = $('shareLink'); f.focus(); f.setSelectionRange(0, f.value.length);
+      try { if (document.execCommand('copy')) return done(); } catch (e) { /* not supported */ }
+      $('copyStatus').textContent = 'Couldn\u2019t copy automatically. Tap the link above and choose Copy.';
+    };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(SHARE_URL).then(done, fallback);
+      else fallback();
+    } catch (e) { fallback(); }
+  });
+  $('sendBtn').addEventListener('click', () => {
+    try { navigator.share({ title: 'Flip 7 Score', text: SHARE_TEXT, url: SHARE_URL }).catch(() => {}); } catch (e) { /* share refused */ }
+  });
 
   /* ---------- Install tip: only in Safari, not once installed or inside a preview frame ---------- */
   try {

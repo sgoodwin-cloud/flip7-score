@@ -1,6 +1,6 @@
 # Flip 7 Score — design and release notes
 
-Last updated: 18 Oct 2026 (v1, Milestone 2)
+Last updated: 19 Oct 2026 (v2)
 
 The full design doc (goals, scoring rules, rules/FAQ plan, screens, data model, milestones, Swipe Snake lessons) is Stuart's Claude doc "Flip 7 Score Tracker — Design Doc": https://claude.ai/code/artifact/daefd7ee-eb95-4476-ac02-92a735e470de
 
@@ -34,8 +34,8 @@ Live app: https://sgoodwin-cloud.github.io/flip7-score/
 
 ### Code structure inside `index.html`
 
-- `<style>`: design-system tokens on `:root` (Rulebook light theme, Night dark theme), then `fs-` components from the Flip Score design system, then screen styles.
-- Screens are `<section>`s toggled with `hidden`: `scrSetup`, `scrBoard`, `scrWinner`, `scrRules`. Sheets: `entrySheet` (keypad), `confirmSheet`.
+- `<style>`: design-system tokens on `:root` (Rulebook light theme only; the Night theme is deliberately left out), then `fs-` components from the Flip Score design system, then screen styles.
+- Screens are `<section>`s toggled with `hidden`: `scrSetup`, `scrBoard`, `scrWinner`, `scrRules`. Sheets: `entrySheet` (keypad), `confirmSheet`, `shareSheet` (link, Copy link, Send…, install steps).
 - Script sections: state and saving → scoring helpers → rendering → setup → score entry → round flow → confirm sheet → rules and FAQ content → install tip → boot.
 - The update banner and service worker registration are a separate script at the bottom.
 
@@ -76,6 +76,7 @@ Totals are always worked out from `rounds`, never stored. `migrate()` upgrades o
 - The first time the update mechanism itself changes, the phone may need a full close and reopen.
 - Home screen apps keep their own storage, separate from Safari. Deleting the icon deletes saved games.
 - No browser `alert()`/`confirm()`: confirmations are built into the page.
+- With `black-translucent`, iPhone status-bar text is white, so the band behind it (`body::before`) is painted navy, not cream.
 
 ---
 
@@ -89,3 +90,6 @@ Totals are always worked out from `rounds`, never stored. `migrate()` upgrades o
 | 18 Oct 2026 | Round entry by keypad in Milestone 1; card-tap calculator in Milestone 3 |
 | 18 Oct 2026 | v1 pushed straight to `main`, as nothing was installed yet; test branches from Milestone 3 |
 | 18 Oct 2026 | Milestone 2 done: Pages live at sgoodwin-cloud.github.io/flip7-score |
+| 19 Oct 2026 | Light mode only; no dark theme (v2) |
+| 19 Oct 2026 | Share button beside Rules: link, Copy link, native Send… where available, install steps (v2) |
+| 19 Oct 2026 | Small non-milestone changes go straight to `main`; milestones still use a test branch |
