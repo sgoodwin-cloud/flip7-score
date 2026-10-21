@@ -1,6 +1,6 @@
 # Flip 7 Score — design and release notes
 
-Last updated: 19 Oct 2026 (v3)
+Last updated: 21 Oct 2026 (v4)
 
 The full design doc (goals, scoring rules, rules/FAQ plan, screens, data model, milestones, Swipe Snake lessons) is Stuart's Claude doc "Flip 7 Score Tracker — Design Doc": https://claude.ai/code/artifact/daefd7ee-eb95-4476-ac02-92a735e470de
 
@@ -100,3 +100,4 @@ Totals are always worked out from `rounds`, never stored. `t` is the order score
 | 19 Oct 2026 | Undo works back one score at a time, then reopens the last round (even from the winner screen) |
 | 19 Oct 2026 | Corrections happen on the scoresheet; game over is re-decided after every correction |
 | 19 Oct 2026 | Button label "View Scoresheet" (Stuart's wording); Milestone 3 merged to `main` as v3 |
+| 21 Oct 2026 | v4: update fixes from Pocket Factory. The update banner is now a bar at the top of the page (it was a floating button near the home bar, which iPhone could make untappable), and updates fetch each file at `?v=<VERSION>` and check `APP_VERSION` before installing, so GitHub Pages' CDN can't hand an update stale files |

@@ -237,13 +237,17 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 
 
 /* Update banner */
-#update { position: fixed; z-index: 30; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  white-space: nowrap; }
-#update:active { transform: translateX(-50%) translateY(4px); }
+#update { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; display: block; width: 100%; height: 48px; box-sizing: border-box;
+  margin: 0; border-radius: 0; white-space: nowrap; touch-action: manipulation; }
+#update:active { transform: none; }
+/* while the bar shows, the sticky header sits below it */
+body.has-update .top { top: calc(env(safe-area-inset-top, 0px) + 48px); }
 @media (prefers-reduced-motion: reduce) { .fs-btn, .key { transition: none; } }
 </style>
 </head>
 <body>
+<!-- Update bar: in the page flow at the top (sticky), never floating, so nothing overlaps it on iPhone -->
+<button class="fs-btn" id="update" type="button" hidden>Update ready · tap to update</button>
 
 <div class="wrap">
   <header class="top">
@@ -419,7 +423,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 <script>
 (function () {
   'use strict';
-  const APP_VERSION = '3';
+  const APP_VERSION = '4';
   const SAVE_KEY = 'flip7-score';
   const SAVE_VERSION = 2;
   const TARGET = 200;
@@ -955,7 +959,6 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   })();
 })();
 </script>
-<button class="fs-btn" id="update" type="button" hidden>Update ready · tap to reload</button>
 
 <script>
 // Offline support + update banner (pattern proven in Swipe Snake v7+)
@@ -971,6 +974,7 @@ if ('serviceWorker' in navigator) {
       // Tap → tell the waiting worker to take over → reload only once it has actually switched on.
       const show = w => {
         btn.hidden = false;
+        document.body.classList.add('has-update');
         btn.onclick = () => {
           const nw = reg.waiting || w;
           btn.textContent = 'Updating…'; btn.disabled = true;
