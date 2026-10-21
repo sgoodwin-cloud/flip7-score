@@ -3,7 +3,7 @@
 Read `DESIGN.md` first. It holds the release process, code structure, the Swipe Snake lessons and the milestone status. The full design doc (scoring rules, screens, milestones) lives in Stuart's Claude doc linked from `DESIGN.md`.
 
 - Keep the app fully offline: no runtime network calls, fonts bundled in `fonts/`.
-- On every release, bump `APP_VERSION` in `index.html` and `VERSION` in `sw.js` together.
+- On every release, bump `APP_VERSION` in `index.html` and `VERSION` in `sw.js` together, to the same number: the service worker refuses to install if they differ.
 - Add any new file to `CORE` in `sw.js`.
 - Each milestone goes to a test branch first; merge to `main` only after Stuart has play-tested it.
 - Never `preventDefault()` touches on buttons; keep the global `[hidden]` rule.
